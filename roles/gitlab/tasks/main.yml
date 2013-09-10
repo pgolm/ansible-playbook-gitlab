@@ -1,0 +1,84 @@
+---
+- name: Install dependencies
+  apt: name={{ item }} state=present update_cache=yes cache_valid_time=900
+  with_items:
+    - build-essential 
+    - zlib1g-dev 
+    - libyaml-dev
+    - libssl-dev
+    - libgdbm-dev
+    - libreadline-dev
+    - libncurses5-dev
+    - libffi-dev
+    - curl
+    - git-core
+    - openssh-server
+    - redis-server
+    - checkinstall
+    - libxml2-dev
+    - libxslt1-dev
+    - libcurl4-openssl-dev
+    - libicu-dev
+    - python
+
+- name: Install Bundler
+  gem: name=bundler state=present 
+
+- name: Create $gitlabUser user
+  user: name=$gitlabUser comment="Gitlab" state=present
+
+- name: gitlab | Checkout Gitlab-Shell
+  git: repo=https://github.com/gitlabhq/gitlab-shell.git dest=$gitlabShellDir version="v1.7.0"
+  sudo: yes
+  sudo_user: $gitlabUser
+
+- name: gitlab | Set git as owner
+  file: path=$gitlabShellDir owner=$gitlabUser group=$gitlabUser recurse=yes state=directory
+
+- name: gitlab | Write config.yml
+  template: src=config.yml.j2 dest=$gitlabShellDir/config.yml owner=$gitlabUser group=$gitlabUser
+  sudo: yes
+  sudo_user: $gitlabUser
+
+- name: gitlab | Install gitlab-shell
+  command: ./bin/install chdir=$gitlabShellDir creates=$gitlabUserDir/repositories
+  sudo: yes
+  sudo_user: $gitlabUser
+
+
+- name: gitlab | Install Gitlab
+  git: repo=https://github.com/gitlabhq/gitlabhq.git dest=$gitlabDir version="6-0-stable"
+  sudo: yes
+  sudo_user: $gitlabUser
+
+- name: gitlab | Write config
+  template: src=gitlab.yml.j2 dest=$gitlabDir/config/gitlab.yml owner=$gitlabUser group=$gitlabUser
+
+- name: gitlab | Create pids directory
+  file: name=$gitlabDir/tmp/pids/ owner=$gitlabUser group=$gitlabUser state=directory
+
+- name: gitlab | Create sockets directory
+  file: name=$gitlabDir/tmp/sockets/ owner=$gitlabUser group=$gitlabUser state=directory
+
+- name: gitlab | Create upload directory
+  file: name=$gitlabDir/public/uploads/ owner=$gitlabUser group=$gitlabUser state=directory
+
+- name: gitlab | Write unicorn config
+  template: src=unicorn.rb.j2 dest=$gitlabDir/config/unicorn.rb owner=$gitlabUser group=$gitlabUser
+
+- name: gitlab | Write db config
+  template: src=database.yml.j2 dest=$gitlabDir/config/database.yml owner=$gitlabUser group=$gitlabUser
+
+- name: gitlab | Install gems
+  gem: name=charlock_holmes version=0.6.9.4 state=present
+
+- name: gitlab | Run bundler
+  command: bundle install --deployment --without development test mysql aws chdir=$gitlabDir
+  sudo: yes
+  sudo_user: $gitlabUser
+
+- name: gitlab | Init db
+  command: bundle exec rake gitlab:setup RAILS_ENV=production force=yes chdir=$gitlabDir
+  sudo: yes
+  sudo_user: $gitlabUser
+  

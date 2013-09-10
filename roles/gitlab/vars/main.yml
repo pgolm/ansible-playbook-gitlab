@@ -1,0 +1,4 @@
+# Gitlab-Shell
+gitlabUserDir: /home/$gitlabUser
+gitlabShellDir: $gitlabUserDir/gitlab-shell
+gitlabDir: $gitlabUserDir/gitlab

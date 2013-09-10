@@ -1,0 +1,12 @@
+---
+- name: nginx | Install 
+  apt: name=nginx state=present update_cache=yes cache_valid_time=900
+
+- name: nginx | Write config
+  template: src=gitlab.j2 dest=/etc/nginx/sites-available/gitlab
+
+- name: nginx | Activate gitlab site
+  file: src=/etc/nginx/sites-available/gitlab dest=/etc/nginx/sites-enabled/gitlab state=link
+
+- name: nginx | Restart
+  service: name=nginx state=restarted

@@ -1,0 +1,21 @@
+---
+- name: Install Ruby Build-Dependencies 
+  apt: pkg=$item state=installed update_cache=yes cache_valid_time=900
+  with_items:
+    - build-essential
+    - openssl
+
+- name: Download Ruby
+  get_url: url=$rubyURL dest=$tmpDir/$rubyFile
+
+- name: Extract ruby
+  command: tar -xf $rubyFile chdir=$tmpDir creates=$rubyTmpDir
+
+- name: Configure ruby 
+  command: ./configure chdir=$rubyTmpDir creates=$rubyTmpDir/Makefile
+
+- name: Build ruby
+  command: make chdir=$rubyTmpDir creates=$rubyTmpDir/ruby
+
+- name: Install ruby
+  command: make install chdir=$rubyTmpDir creates=/usr/local/bin/ruby

@@ -1,0 +1,22 @@
+---
+# need LC_ALL="en_GB.utf8" 
+- name: Install Postgres
+  apt: name={{ item }} state=present update_cache=yes cache_valid_time=900
+  with_items:
+    - python
+    - python-psycopg2
+    - postgresql-9.1
+    - libpq-dev
+
+- name: Start PostgreSQL
+  service: name=postgresql state=started
+
+- name: Create user
+  postgresql_user: name=$gitlabUser password=1234
+  sudo: yes
+  sudo_user: postgres
+
+- name: gitlab | Create DB
+  postgresql_db: name=gitlabhq_production owner=$gitlabUser
+  sudo: yes
+  sudo_user: postgres
