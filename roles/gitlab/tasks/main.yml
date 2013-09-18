@@ -20,65 +20,89 @@
     - libcurl4-openssl-dev
     - libicu-dev
     - python
+    - openssl
+  tags: gitlab
 
 - name: Install Bundler
   gem: name=bundler state=present 
+  tags: gitlab
 
 - name: Create $gitlabUser user
   user: name=$gitlabUser comment="Gitlab" state=present
+  tags: gitlab
 
 - name: gitlab | Checkout Gitlab-Shell
   git: repo=https://github.com/gitlabhq/gitlab-shell.git dest=$gitlabShellDir version="v1.7.0"
   sudo: yes
   sudo_user: $gitlabUser
+  tags: gitlab
 
 - name: gitlab | Set git as owner
   file: path=$gitlabShellDir owner=$gitlabUser group=$gitlabUser recurse=yes state=directory
+  tags: gitlab
 
 - name: gitlab | Write config.yml
   template: src=config.yml.j2 dest=$gitlabShellDir/config.yml owner=$gitlabUser group=$gitlabUser
   sudo: yes
   sudo_user: $gitlabUser
+  tags: gitlab
 
 - name: gitlab | Install gitlab-shell
   command: ./bin/install chdir=$gitlabShellDir creates=$gitlabUserDir/repositories
   sudo: yes
   sudo_user: $gitlabUser
-
+  tags: gitlab
 
 - name: gitlab | Install Gitlab
   git: repo=https://github.com/gitlabhq/gitlabhq.git dest=$gitlabDir version="6-0-stable"
   sudo: yes
   sudo_user: $gitlabUser
+  tags: gitlab
 
 - name: gitlab | Write config
   template: src=gitlab.yml.j2 dest=$gitlabDir/config/gitlab.yml owner=$gitlabUser group=$gitlabUser
+  tags: gitlab
 
 - name: gitlab | Create pids directory
   file: name=$gitlabDir/tmp/pids/ owner=$gitlabUser group=$gitlabUser state=directory
+  tags: gitlab
 
 - name: gitlab | Create sockets directory
   file: name=$gitlabDir/tmp/sockets/ owner=$gitlabUser group=$gitlabUser state=directory
+  tags: gitlab
 
 - name: gitlab | Create upload directory
   file: name=$gitlabDir/public/uploads/ owner=$gitlabUser group=$gitlabUser state=directory
+  tags: gitlab
 
 - name: gitlab | Write unicorn config
   template: src=unicorn.rb.j2 dest=$gitlabDir/config/unicorn.rb owner=$gitlabUser group=$gitlabUser
+  tags: gitlab
 
 - name: gitlab | Write db config
   template: src=database.yml.j2 dest=$gitlabDir/config/database.yml owner=$gitlabUser group=$gitlabUser
+  tags: gitlab
 
 - name: gitlab | Install gems
   gem: name=charlock_holmes version=0.6.9.4 state=present
+  tags: gitlab
 
 - name: gitlab | Run bundler
   command: bundle install --deployment --without development test mysql aws chdir=$gitlabDir
   sudo: yes
   sudo_user: $gitlabUser
+  tags: gitlab
 
 - name: gitlab | Init db
   command: bundle exec rake gitlab:setup RAILS_ENV=production force=yes chdir=$gitlabDir
   sudo: yes
   sudo_user: $gitlabUser
-  
+  tags: gitlab
+
+- name: gitlab | Install init.d script
+  copy: src=gitlab-initd dest=/etc/init.d/gitlab owner=root group=root mode=0655
+  tags: gitlab
+
+- name: gitlab | Start gitlab
+  service: name=gitlab state=restarted
+  tags: gitlab

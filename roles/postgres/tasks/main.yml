@@ -7,16 +7,28 @@
     - python-psycopg2
     - postgresql-9.1
     - libpq-dev
+  tags: 
+    - postgresql
+    - database
 
 - name: Start PostgreSQL
   service: name=postgresql state=started
+  tags: 
+    - postgresql
+    - database
 
 - name: Create user
-  postgresql_user: name=$gitlabUser password=1234
+  postgresql_user: name=$gitlabUser password=$db_password
   sudo: yes
   sudo_user: postgres
+  tags: 
+    - postgresql
+    - database
 
 - name: gitlab | Create DB
   postgresql_db: name=gitlabhq_production owner=$gitlabUser
   sudo: yes
   sudo_user: postgres
+  tags: 
+    - postgresql
+    - database

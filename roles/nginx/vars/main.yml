@@ -1,0 +1,3 @@
+ssl_enabled: false
+ssl_private: /home/$gitlabUser/ssl/private.key
+ssl_public: /home/$gitlabUser/ssl/public.chained.crt

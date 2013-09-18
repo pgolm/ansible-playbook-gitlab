@@ -1,12 +1,15 @@
 ---
-- hosts: gitlab
-  user: root
-  sudo: False
-  sudo_user: root
+- hosts: all
+  sudo: yes
   vars_files:
     - vars.yml
+  vars_prompt:
+    - name: "db_pw"
+      prompt: "Postgres password for user {{ gitlabUser }}"
+      private: yes
+      confirm: yes
   roles:
     - { role: ruby }
-    - { role: postgres }
-    - { role: gitlab }
+    - { role: postgres, db_password: $db_pw }
+    - { role: gitlab, db_password: $db_pw }
     - { role: nginx }
