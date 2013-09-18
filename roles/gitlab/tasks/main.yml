@@ -63,6 +63,10 @@
   template: src=gitlab.yml.j2 dest=$gitlabDir/config/gitlab.yml owner=$gitlabUser group=$gitlabUser
   tags: gitlab
 
+- name: gitlab | Create satellites directory
+  file: name=$gitlabUserDir/gitlab-satellites owner=$gitlabUser group=$gitlabUser state=directory
+  tags: gitlab
+
 - name: gitlab | Create pids directory
   file: name=$gitlabDir/tmp/pids/ owner=$gitlabUser group=$gitlabUser state=directory
   tags: gitlab
